@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Namma TN Guide – Tamil Nadu Tourist Guide Generator</title>
+<meta name="description" content="Generate a personalized Tamil Nadu travel guide in minutes, powered by CrewAI automation and verified Supabase tourist data.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Madurai:wght@400;500;600;700&family=Young+Serif&display=swap" rel="stylesheet">
+<script src="env.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+  :root {
+    --ink: #15203b;
+    --ink-soft: #4a5570;
+    --paper: #f4f7f6;
+    --card: #ffffff;
+    --line: #d9e2df;
+    --line-soft: #eef2f1;
+    --peacock: #0f766e;
+    --peacock-dark: #0b5a54;
+    --peacock-light: #e6f5f3;
+    --marigold: #e8a317;
+    --marigold-light: #fef7e7;
+    --marigold-dark: #b87a05;
+    --kumkum: #b3261e;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 16px rgba(21, 32, 59, 0.06);
+    --shadow-hover: 0 8px 24px rgba(21, 32, 59, 0.12);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Hind Madurai", system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Temple-border traditional band */
+  .band {
+    height: 12px;
+    background:
+      repeating-linear-gradient(90deg,
+        var(--kumkum) 0 24px, var(--marigold) 24px 30px,
+        var(--ink) 30px 54px, var(--marigold) 54px 60px);
+  }
+
+  header.top {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 30px 24px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .header-content { max-width: 620px; }
+  header.top h1 {
+    font-family: "Young Serif", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    line-height: 1.12;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header.top h1 span.logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--peacock-light);
+    color: var(--peacock);
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 1.6rem;
+    box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.2);
+  }
+  header.top p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 1.05rem;
+  }
+
+  /* Status Badges Group */
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .status-badge {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 30px;
+    padding: 6px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: var(--ink);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    display: inline-block;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    animation: pulse-dot 2.5s infinite;
+  }
+  .status-dot.offline {
+    background: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    animation: none;
+  }
+  .status-dot.warning {
+    background: var(--marigold);
+    box-shadow: 0 0 0 3px rgba(232, 163, 23, 0.2);
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.92); }
+  }
+
+  .config-btn {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 30px;
+    padding: 7px 16px;
+    color: var(--peacock);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .config-btn:hover {
+    border-color: var(--peacock);
+    background: var(--peacock-light);
+  }
+
+  /* Main Layout */
+  main {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 16px 24px 40px;
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+    flex: 1;
+  }
+  @media (max-width: 960px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  /* Left Panel */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+    position: sticky;
+    top: 20px;
+    box-shadow: var(--shadow);
+  }
+  @media (max-width: 960px) { .panel { position: static; } }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .panel-header h2 {
+    font-family: "Young Serif", Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    margin: 0;
+    color: var(--ink);
+  }
+  .panel-header span {
+    font-size: 0.8rem;
+    color: var(--peacock);
+    background: var(--peacock-light);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+
+  /* Configuration Drawer */
+  .settings-box {
+    background: #f8faf9;
+    border: 1px solid #c2dbd5;
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .settings-box h3 {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    color: var(--peacock-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .settings-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin: 12px 0 6px;
+  }
+  .settings-box label {
+    font-size: 0.82rem;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .settings-box input {
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    margin-top: 3px;
+  }
+  .settings-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  /* Forms */
+  form { display: grid; gap: 15px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label {
+    display: grid;
+    gap: 5px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--ink);
+  }
+  label span.hint {
+    font-weight: normal;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  input, select, textarea {
+    font: inherit;
+    color: inherit;
+    padding: 9px 12px;
+    border: 1px solid #b9c7c4;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+    outline: 3px solid rgba(232, 163, 23, 0.45);
+    outline-offset: 1px;
+    border-color: var(--peacock);
+  }
+
+  /* Buttons */
+  button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    padding: 11px 18px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: var(--peacock);
+    color: #fff;
+    width: 100%;
+    font-size: 1.02rem;
+    box-shadow: 0 2px 8px rgba(15, 118, 110, 0.25);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--peacock-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35);
+  }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--line);
+    color: var(--ink);
+    padding: 8px 14px;
+    font-size: 0.88rem;
+  }
+  .btn-ghost:hover {
+    border-color: var(--peacock);
+    background: var(--peacock-light);
+    color: var(--peacock-dark);
+  }
+
+  .error-box {
+    background: #fdecea;
+    border: 1px solid #f0b4af;
+    color: #7a1712;
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    margin-top: 12px;
+  }
+
+  /* Stage / Right Column */
+  .stage-container {
+    display: grid;
+    gap: 18px;
+  }
+
+  /* Stage Nav Tabs */
+  .stage-nav {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 2px;
+    overflow-x: auto;
+  }
+  .stage-tab {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 10px 16px;
+    color: var(--ink-soft);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stage-tab:hover {
+    color: var(--ink);
+    border-bottom-color: var(--line);
+  }
+  .stage-tab.active {
+    color: var(--peacock);
+    border-bottom-color: var(--peacock);
+  }
+  .stage-tab .badge {
+    background: var(--peacock-light);
+    color: var(--peacock-dark);
+    font-size: 0.75rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  .stage-view {
+    display: none;
+  }
+  .stage-view.active {
+    display: block;
+  }
+
+  /* Empty state */
+  .empty {
+    border: 2px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 60px 32px;
+    color: var(--ink-soft);
+    text-align: center;
+    background: rgba(255,255,255,0.7);
+  }
+  .empty strong {
+    display: block;
+    color: var(--ink);
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    font-family: "Young Serif", Georgia, serif;
+    font-weight: 400;
+  }
+  .empty p {
+    max-width: 46ch;
+    margin: 0 auto 16px;
+    font-size: 0.95rem;
+  }
+
+  /* Progress tracker */
+  .route-tracker {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+  }
+  .route-tracker h2 {
+    font-family: "Young Serif", Georgia, serif;
+    font-weight: 400;
+    margin: 0 0 6px;
+    font-size: 1.6rem;
+    color: var(--ink);
+  }
+  .route-tracker .elapsed {
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+    font-size: 0.92rem;
+  }
+  .route-tracker .agent-status {
+    background: var(--peacock-light);
+    border: 1px solid #b7dfd9;
+    color: var(--peacock-dark);
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+
+  .track { position: relative; display: flex; justify-content: space-between; padding: 0 6px; margin-top: 10px; }
+  .track::before {
+    content: ""; position: absolute; left: 14px; right: 14px; top: 13px;
+    border-top: 3px dotted #b9c4c1;
+  }
+  .track .fill {
+    position: absolute; left: 14px; top: 13px; height: 3px; width: 0;
+    background: var(--marigold);
+    transition: width 0.6s ease;
+  }
+  .stop { position: relative; z-index: 1; text-align: center; width: 100px; font-size: 0.85rem; color: var(--ink-soft); }
+  .stop i {
+    display: block; width: 28px; height: 28px; margin: 0 auto 8px;
+    border-radius: 50%; background: #fff; border: 3px solid #b9c4c1;
+  }
+  .stop.done i { background: var(--peacock); border-color: var(--peacock); }
+  .stop.now i { border-color: var(--marigold); background: #fff; animation: pulse 1.4s ease-in-out infinite; }
+  .stop.done, .stop.now { color: var(--ink); font-weight: 600; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(232,163,23,0.25); } }
+
+  /* Guide Report */
+  .guide-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .guide-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+    background: #fafcfb;
+  }
+  .guide-toolbar span {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--peacock-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .guide-toolbar div { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .prose {
+    padding: 32px;
+    line-height: 1.7;
+    font-size: 1.02rem;
+  }
+  .prose h1 {
+    font-family: "Young Serif", Georgia, serif;
+    font-size: 2.2rem;
+    color: var(--ink);
+    margin: 0 0 16px;
+    border-bottom: 2px solid var(--line-soft);
+    padding-bottom: 12px;
+  }
+  .prose h2 {
+    font-family: "Young Serif", Georgia, serif;
+    font-size: 1.6rem;
+    color: var(--peacock);
+    margin: 32px 0 16px;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 8px;
+  }
+  .prose h3 {
+    font-family: "Young Serif", Georgia, serif;
+    font-size: 1.25rem;
+    color: var(--ink);
+    margin: 24px 0 12px;
+  }
+  .prose h4 {
+    font-size: 1.1rem;
+    color: var(--peacock-dark);
+    margin: 18px 0 8px;
+  }
+  .prose blockquote {
+    border-left: 4px solid var(--marigold);
+    margin: 18px 0;
+    padding: 12px 20px;
+    background: var(--marigold-light);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: #634300;
+  }
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: #fff;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .prose th, .prose td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .prose th {
+    background: #f4f8f7;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .prose ul, .prose ol {
+    padding-left: 24px;
+    margin: 14px 0;
+  }
+  .prose li { margin-bottom: 6px; }
+
+  /* Verified Attractions Grid */
+  .places-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .place-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .place-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+  }
+  .place-img-wrap {
+    height: 170px;
+    position: relative;
+    background: #e2e8e6;
+    overflow: hidden;
+  }
+  .place-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .place-card:hover .place-img {
+    transform: scale(1.04);
+  }
+  .place-verified-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(15, 118, 110, 0.92);
+    color: #fff;
+    backdrop-filter: blur(4px);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .place-cat-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(21, 32, 59, 0.82);
+    color: #fff;
+    backdrop-filter: blur(4px);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    max-width: 90%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .place-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 8px;
+  }
+  .place-title {
+    font-family: "Young Serif", Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    margin: 0;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+  .place-desc {
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.45;
+    flex: 1;
+  }
+  .place-meta-list {
+    display: grid;
+    gap: 4px;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 0.8rem;
+    color: var(--ink);
+  }
+  .place-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .place-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+  }
+  .place-actions a {
+    flex: 1;
+    text-align: center;
+    text-decoration: none;
+    background: var(--peacock-light);
+    color: var(--peacock);
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .place-actions a:hover {
+    background: var(--peacock);
+    color: #fff;
+  }
+
+  /* Cultural Guides Grid */
+  .guides-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .guide-profile-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .guide-profile-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+  }
+  .guide-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .guide-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--marigold-light);
+    color: var(--marigold-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    border: 2px solid var(--marigold);
+    flex-shrink: 0;
+  }
+  .guide-header-info h3 {
+    margin: 0 0 4px;
+    font-family: "Young Serif", Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .guide-verified-tag {
+    color: #10b981;
+    font-size: 0.95rem;
+  }
+  .guide-langs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .guide-lang-pill {
+    background: var(--peacock-light);
+    color: var(--peacock-dark);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .guide-spec {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.5;
+    flex: 1;
+  }
+  .guide-whatsapp-btn {
+    background: #25d366;
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.88rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+    box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);
+  }
+  .guide-whatsapp-btn:hover {
+    background: #1eb956;
+  }
+
+  /* District Info Banner */
+  .district-hero {
+    background: linear-gradient(135deg, #0b5a54 0%, #0f766e 100%);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .district-hero-text h3 {
+    margin: 0 0 4px;
+    font-family: "Young Serif", Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+  }
+  .district-hero-text p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.92rem;
+    max-width: 55ch;
+  }
+  .district-tagline {
+    background: rgba(255,255,255,0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    backdrop-filter: blur(4px);
+  }
+
+  footer {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="band"></div>
+
+<header class="top">
+  <div class="header-content">
+    <h1><span class="logo-icon">🏛️</span> Namma TN Guide</h1>
+    <p>Tamil Nadu tourist guide generator · CrewAI & Supabase powered</p>
+  </div>
+  <div class="header-actions">
+    <div class="status-badge" id="crew-badge" title="CrewAI Automation Status">
+      <span class="status-dot" id="crew-dot"></span>
+      <span id="crew-status-text">CrewAI: Connecting...</span>
+    </div>
+    <div class="status-badge" id="supa-badge" title="Supabase Database Status">
+      <span class="status-dot" id="supa-dot"></span>
+      <span id="supa-status-text">Supabase: Initializing...</span>
+    </div>
+    <button class="config-btn" id="toggle-settings" type="button" aria-expanded="false">
+      ⚙️ Config
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- Left Column: Generator Form -->
+  <section class="panel" aria-labelledby="form-title">
+    <div class="panel-header">
+      <h2 id="form-title">Trip Details</h2>
+      <span>Tamil Nadu</span>
+    </div>
+
+    <!-- Collapsible Settings Panel -->
+    <div id="settings-panel" class="settings-box" hidden>
+      <h3>⚙️ Configuration Settings</h3>
+      
+      <div class="settings-section-title">Supabase Database</div>
+      <label>
+        Project REST URL
+        <input type="text" id="cfg-supa-url" value="https://yljiexsrnjzyfjgplpvg.supabase.co">
+      </label>
+      <label>
+        Anon / Publishable API Key
+        <input type="password" id="cfg-supa-key" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsamlleHNybmp6eWZqZ3BscHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5NzQxNTQsImV4cCI6MjEwNTU1MDE1NH0.JA92I-eUWfiEypcZw2yp3KOkngb35LRtcwTiBpmEAxs">
+      </label>
+
+      <div class="settings-section-title">CrewAI Cloud Automation</div>
+      <label>
+        CrewAI Cloud URL
+        <input type="text" id="cfg-crew-url" value="https://namma-tn-guide-tourist-guide-generator-v1-1-10ae4218.crewai.com">
+      </label>
+      <label>
+        User Bearer Token
+        <input type="password" id="cfg-crew-token" value="73e786169942">
+      </label>
+
+      <div class="settings-actions">
+        <button type="button" class="btn-primary" id="cfg-save" style="padding:7px 12px;font-size:0.85rem;width:auto;">Save & Reconnect</button>
+        <button type="button" class="btn-ghost" id="cfg-reset" style="padding:7px 12px;font-size:0.85rem;width:auto;">Reset</button>
+      </div>
+    </div>
+
+    <form id="form" novalidate>
+      <div id="fields" style="display:grid;gap:14px;">
+        <label>
+          District (மாவட்டம்)
+          <select id="f-district" name="district" required>
+            <option value="Dindigul" selected>Dindigul (திண்டுக்கல்) – Palani & Kodaikanal ⭐</option>
+            <option value="Madurai">Madurai (மதுரை) – Temple City & Nayak Palace</option>
+            <option value="Thanjavur">Thanjavur (தஞ்சாவூர்) – Big Temple & Chola Art</option>
+            <option value="Chennai">Chennai (சென்னை) – Gateway & Marina</option>
+            <option value="Coimbatore">Coimbatore (கோயம்புத்தூர்) – Kongu Capital</option>
+            <option value="Nilgiris">Nilgiris (நீலகிரி) – Ooty & Tea Valleys</option>
+            <option value="Kanyakumari">Kanyakumari (கன்னியாகுமரி) – Sunrise & Ocean Confluence</option>
+            <option value="Tiruchirappalli">Tiruchirappalli (திருச்சிராப்பள்ளி) – Rockfort & Srirangam</option>
+            <option value="Tirunelveli">Tirunelveli (திருநெல்வேலி) – Nellaiyappar & Halwa</option>
+            <option value="Tiruvannamalai">Tiruvannamalai (திருவண்ணாமலை) – Sacred Annamalaiyar</option>
+            <option value="Ramanathapuram">Ramanathapuram (ராமநாதபுரம்) – Rameswaram & Coral Coast</option>
+            <option value="Salem">Salem (சேலம்) – Yercaud & Steel City</option>
+            <option value="Kanchipuram">Kanchipuram (காஞ்சிபுரம்) – Silk & Thousand Temples</option>
+            <option value="Cuddalore">Cuddalore (கடலூர்) – Pichavaram Mangroves & Chidambaram</option>
+            <option value="Theni">Theni (தேனி) – Suruli Falls & Cardamom Hills</option>
+            <option value="Thoothukudi">Thoothukudi (தூத்துக்குடி) – Pearl City & Ports</option>
+            <option value="Erode">Erode (ஈரோடு) – Turmeric City & Bhavani Sangam</option>
+            <option value="Sivaganga">Sivaganga (சிவகங்கை) – Chettinad Mansions & Cuisine</option>
+            <option value="Nagapattinam">Nagapattinam (நாகப்பட்டினம்) – Velankanni & Coastal Heritage</option>
+            <option value="Kallakurichi">Kallakurichi (கள்ளக்குறிச்சி)</option>
+            <option value="Karur">Karur (கரூர்)</option>
+            <option value="Krishnagiri">Krishnagiri (கிருஷ்ணகிரி)</option>
+            <option value="Mayiladuthurai">Mayiladuthurai (மயிலாடுதுறை)</option>
+            <option value="Namakkal">Namakkal (நாமக்கல்)</option>
+            <option value="Perambalur">Perambalur (பெரம்பலூர்)</option>
+            <option value="Pudukkottai">Pudukkottai (புதுக்கோட்டை)</option>
+            <option value="Ranipet">Ranipet (ராணிப்பேட்டை)</option>
+            <option value="Tenkasi">Tenkasi (தென்காசி) – Courtallam Waterfalls</option>
+            <option value="Tirupathur">Tirupathur (திருப்பத்தூர்) – Yelagiri Hills</option>
+            <option value="Tiruppur">Tiruppur (திருப்பூர்)</option>
+            <option value="Tiruvallur">Tiruvallur (திருவள்ளூர்)</option>
+            <option value="Tiruvarur">Tiruvarur (திருவாரூர்)</option>
+            <option value="Vellore">Vellore (வேலூர்) – Historic Fort & Golden Temple</option>
+            <option value="Viluppuram">Viluppuram (விழுப்புரம்) – Gingee Fort</option>
+            <option value="Virudhunagar">Virudhunagar (விருதுநகர்)</option>
+            <option value="Ariyalur">Ariyalur (அரியலூர்)</option>
+            <option value="Chengalpattu">Chengalpattu (செங்கல்பட்டு) – Mahabalipuram</option>
+            <option value="Dharmapuri">Dharmapuri (தர்மபுரி) – Hogenakkal Falls</option>
+          </select>
+        </label>
+
+        <div class="form-row">
+          <label>
+            Travel Date
+            <input type="date" id="f-travel_date" name="travel_date" required>
+          </label>
+          <label>
+            Duration (days)
+            <input type="number" id="f-days" name="days" min="1" max="15" value="2" required>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>
+            Hours / Day
+            <input type="number" id="f-hours_per_day" name="hours_per_day" min="4" max="16" value="8" required>
+          </label>
+          <label>
+            Budget Tier
+            <select id="f-budget" name="budget">
+              <option value="moderate" selected>Moderate</option>
+              <option value="budget">Budget Friendly</option>
+              <option value="luxury">Luxury / Premium</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>
+            Adults
+            <input type="number" id="f-adults" name="adults" min="1" max="20" value="2" required>
+          </label>
+          <label>
+            Children
+            <input type="number" id="f-children" name="children" min="0" max="15" value="0">
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>
+            Transport
+            <select id="f-transport" name="transport">
+              <option value="car" selected>Car / Cab</option>
+              <option value="bus">Public Transit / Bus</option>
+              <option value="train">Train</option>
+              <option value="bike">Two-Wheeler</option>
+              <option value="walking">Walking</option>
+            </select>
+          </label>
+          <label>
+            Language
+            <select id="f-language" name="language">
+              <option value="en" selected>English</option>
+              <option value="ta">தமிழ் (Tamil)</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          Travel Interests & Preferences
+          <input type="text" id="f-interests" name="interests" placeholder="e.g. temples, heritage, culinary, waterfalls" value="temples, heritage, culinary">
+          <span class="hint">Comma-separated interests (temples, hills, heritage, culinary, waterfalls, etc.)</span>
+        </label>
+
+        <!-- Dynamic additional inputs container from CrewAI schema -->
+        <div id="extra-fields" style="display:grid;gap:14px;"></div>
+      </div>
+
+      <div style="display:grid;gap:8px;margin-top:8px;">
+        <button class="btn-primary" id="submit" type="submit">
+          🚀 Generate AI Travel Guide
+        </button>
+        <button class="btn-ghost" id="quick-generate-btn" type="button" title="Generates verified itinerary directly from database instantly without waiting for Cloud Crew">
+          ⚡ Instant Itinerary (from Verified Database)
+        </button>
+      </div>
+    </form>
+    <div id="form-error" class="error-box" hidden></div>
+  </section>
+
+  <!-- Right Column: Stage Container with Tabs -->
+  <section class="stage-container">
+    <div class="stage-nav">
+      <button type="button" class="stage-tab active" data-view="planner">
+        🧭 AI Travel Planner
+      </button>
+      <button type="button" class="stage-tab" data-view="attractions">
+        🏛️ Verified Attractions <span class="badge" id="badge-places-count">0</span>
+      </button>
+      <button type="button" class="stage-tab" data-view="guides">
+        👤 Cultural Guides <span class="badge" id="badge-guides-count">0</span>
+      </button>
+    </div>
+
+    <!-- View 1: Travel Planner Output -->
+    <div class="stage-view active" id="view-planner" aria-live="polite">
+      <div class="empty" id="empty-state">
+        <strong>Your Personalized Guide Will Appear Here</strong>
+        <p>Select your district, trip dates, and preferences, then click <em>Generate AI Travel Guide</em>. Your CrewAI agents and Supabase verified database will research places, calculate budgets, and format your itinerary.</p>
+        <button type="button" class="btn-ghost" id="quick-demo-btn" style="margin:0 auto;">
+          ✨ Or Preview Dindigul Instant Itinerary
+        </button>
+      </div>
+      <div id="planner-output-container"></div>
+    </div>
+
+    <!-- View 2: Verified Attractions Grid -->
+    <div class="stage-view" id="view-attractions">
+      <div id="district-banner-attractions"></div>
+      <div class="places-grid" id="places-grid">
+        <div class="empty">Loading verified attractions from Supabase...</div>
+      </div>
+    </div>
+
+    <!-- View 3: Cultural Guides Directory -->
+    <div class="stage-view" id="view-guides">
+      <div id="district-banner-guides"></div>
+      <div class="guides-grid" id="guides-grid">
+        <div class="empty">Loading verified cultural guides from Supabase...</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Powered by CrewAI Cloud Automation & Supabase Cloud Database &middot; Namma TN Guide 2026. All verified attractions and guides are authenticated against official database records.
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Environment & Default Configurations ---------- */
+  var env = window.__ENV || {};
+  var DEFAULT_CREW_URL = env.CREWAI_URL || "https://namma-tn-guide-tourist-guide-generator-v1-1-10ae4218.crewai.com";
+  var DEFAULT_CREW_TOKEN = env.CREWAI_BEARER_TOKEN || "73e786169942";
+  var DEFAULT_SUPA_URL = env.SUPABASE_URL || "https://yljiexsrnjzyfjgplpvg.supabase.co";
+  var DEFAULT_SUPA_KEY = env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsamlleHNybmp6eWZqZ3BscHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5NzQxNTQsImV4cCI6MjEwNTU1MDE1NH0.JA92I-eUWfiEypcZw2yp3KOkngb35LRtcwTiBpmEAxs";
+
+  // Async loader to parse .env file directly if served via local dev server
+  (async function loadDotEnv() {
+    try {
+      var res = await fetch('.env');
+      if (res.ok) {
+        var text = await res.text();
+        text.split('\n').forEach(function (line) {
+          line = line.trim();
+          if (!line || line.startsWith('#')) return;
+          var eqIdx = line.indexOf('=');
+          if (eqIdx !== -1) {
+            var k = line.substring(0, eqIdx).trim();
+            var v = line.substring(eqIdx + 1).trim();
+            if (k === 'SUPABASE_URL' && !localStorage.getItem('supabase_url')) DEFAULT_SUPA_URL = v;
+            if ((k === 'SUPABASE_ANON_KEY' || k === 'SUPABASE_PUBLISHABLE_KEY') && !localStorage.getItem('supabase_key')) DEFAULT_SUPA_KEY = v;
+            if (k === 'CREWAI_URL' && !localStorage.getItem('crewai_url')) DEFAULT_CREW_URL = v;
+            if (k === 'CREWAI_BEARER_TOKEN' && !localStorage.getItem('crewai_token')) DEFAULT_CREW_TOKEN = v;
+          }
+        });
+      }
+    } catch (e) { /* ignore in static environments */ }
+  })();
+  
+  var POLL_MS = 3000;
+  var TIMEOUT_MS = 20 * 60 * 1000;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* Form Elements */
+  var form = $("form"), submitBtn = $("submit"), quickGenerateBtn = $("quick-generate-btn");
+  var quickDemoBtn = $("quick-demo-btn");
+  var formError = $("form-error"), extraFieldsEl = $("extra-fields");
+  var districtSelect = $("f-district");
+
+  /* Settings Elements */
+  var settingsPanel = $("settings-panel"), toggleSettingsBtn = $("toggle-settings");
+  var cfgCrewUrl = $("cfg-crew-url"), cfgCrewToken = $("cfg-crew-token");
+  var cfgSupaUrl = $("cfg-supa-url"), cfgSupaKey = $("cfg-supa-key");
+  var cfgSaveBtn = $("cfg-save"), cfgResetBtn = $("cfg-reset");
+
+  /* Status Elements */
+  var crewDot = $("crew-dot"), crewStatusText = $("crew-status-text");
+  var supaDot = $("supa-dot"), supaStatusText = $("supa-status-text");
+  var badgePlacesCount = $("badge-places-count"), badgeGuidesCount = $("badge-guides-count");
+
+  /* Tabs & Views */
+  var stageTabs = document.querySelectorAll(".stage-tab");
+  var stageViews = {
+    planner: $("view-planner"),
+    attractions: $("view-attractions"),
+    guides: $("view-guides")
+  };
+  var emptyState = $("empty-state");
+  var plannerOutputContainer = $("planner-output-container");
+  var placesGrid = $("places-grid"), guidesGrid = $("guides-grid");
+  var districtBannerAttractions = $("district-banner-attractions");
+  var districtBannerGuides = $("district-banner-guides");
+
+  /* Runtime State */
+  var crewUrl = localStorage.getItem("crewai_url") || DEFAULT_CREW_URL;
+  var crewToken = localStorage.getItem("crewai_token") || DEFAULT_CREW_TOKEN;
+  var supaUrl = localStorage.getItem("supabase_url") || DEFAULT_SUPA_URL;
+  var supaKey = localStorage.getItem("supabase_key") || DEFAULT_SUPA_KEY;
+
+  var allCrewInputKeys = [];
+  var runToken = 0;
+  var lastMarkdown = "";
+  var cachedDistricts = [];
+  var cachedPlaces = [];
+  var cachedGuides = [];
+
+  // Initialize input fields with stored values
+  cfgCrewUrl.value = crewUrl;
+  cfgCrewToken.value = crewToken;
+  cfgSupaUrl.value = supaUrl;
+  cfgSupaKey.value = supaKey;
+
+  // Set default travel date to next weekend if empty
+  var travelDateInp = $("f-travel_date");
+  if (!travelDateInp.value) {
+    var today = new Date();
+    today.setDate(today.getDate() + 7);
+    travelDateInp.value = today.toISOString().slice(0, 10);
+  }
+
+  /* ---------- Tab Navigation ---------- */
+  stageTabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var viewName = tab.getAttribute("data-view");
+      switchView(viewName);
+    });
+  });
+
+  function switchView(viewName) {
+    stageTabs.forEach(function (t) {
+      if (t.getAttribute("data-view") === viewName) {
+        t.classList.add("active");
+      } else {
+        t.classList.remove("active");
+      }
+    });
+
+    Object.keys(stageViews).forEach(function (key) {
+      if (key === viewName) {
+        stageViews[key].classList.add("active");
+      } else {
+        stageViews[key].classList.remove("active");
+      }
+    });
+  }
+
+  /* ---------- Settings Drawer Handling ---------- */
+  toggleSettingsBtn.onclick = function () {
+    var hidden = settingsPanel.hidden;
+    settingsPanel.hidden = !hidden;
+    toggleSettingsBtn.setAttribute("aria-expanded", String(hidden));
+  };
+
+  cfgSaveBtn.onclick = function () {
+    crewUrl = (cfgCrewUrl.value || DEFAULT_CREW_URL).trim().replace(/\/+$/, "");
+    crewToken = (cfgCrewToken.value || DEFAULT_CREW_TOKEN).trim();
+    supaUrl = (cfgSupaUrl.value || DEFAULT_SUPA_URL).trim().replace(/\/+$/, "");
+    supaKey = (cfgSupaKey.value || DEFAULT_SUPA_KEY).trim();
+
+    localStorage.setItem("crewai_url", crewUrl);
+    localStorage.setItem("crewai_token", crewToken);
+    localStorage.setItem("supabase_url", supaUrl);
+    localStorage.setItem("supabase_key", supaKey);
+
+    settingsPanel.hidden = true;
+    initConnections();
+  };
+
+  cfgResetBtn.onclick = function () {
+    crewUrl = DEFAULT_CREW_URL;
+    crewToken = DEFAULT_CREW_TOKEN;
+    supaUrl = DEFAULT_SUPA_URL;
+    supaKey = DEFAULT_SUPA_KEY;
+
+    cfgCrewUrl.value = DEFAULT_CREW_URL;
+    cfgCrewToken.value = DEFAULT_CREW_TOKEN;
+    cfgSupaUrl.value = DEFAULT_SUPA_URL;
+    cfgSupaKey.value = DEFAULT_SUPA_KEY;
+
+    localStorage.removeItem("crewai_url");
+    localStorage.removeItem("crewai_token");
+    localStorage.removeItem("supabase_url");
+    localStorage.removeItem("supabase_key");
+
+    settingsPanel.hidden = true;
+    initConnections();
+  };
+
+  /* ---------- Status Indicators ---------- */
+  function setCrewStatus(ok, text) {
+    if (ok) {
+      crewDot.className = "status-dot";
+      crewStatusText.textContent = text || "CrewAI Active";
+    } else {
+      crewDot.className = "status-dot offline";
+      crewStatusText.textContent = text || "CrewAI Offline";
+    }
+  }
+
+  function setSupaStatus(ok, text) {
+    if (ok) {
+      supaDot.className = "status-dot";
+      supaStatusText.textContent = text || "Supabase Connected";
+    } else {
+      supaDot.className = "status-dot offline";
+      supaStatusText.textContent = text || "Supabase Error";
+    }
+  }
+
+  function showFormError(msg, retry) {
+    formError.hidden = false;
+    formError.innerHTML = "";
+    var p = document.createElement("p");
+    p.style.margin = "0";
+    p.textContent = msg;
+    formError.appendChild(p);
+
+    if (retry) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn-ghost";
+      b.style.marginTop = "8px";
+      b.textContent = "Try again";
+      b.onclick = retry;
+      formError.appendChild(b);
+    }
+  }
+
+  /* ---------- Supabase REST API Client ---------- */
+  async function supaApi(table, queryParams) {
+    var qs = queryParams ? "?" + queryParams : "";
+    var url = supaUrl + "/rest/v1/" + table + qs;
+    var res = await fetch(url, {
+      headers: {
+        "apikey": supaKey,
+        "Authorization": "Bearer " + supaKey
+      }
+    });
+    if (!res.ok) {
+      var text = await res.text();
+      throw new Error("Supabase error (" + res.status + "): " + text);
+    }
+    return await res.json();
+  }
+
+  /* ---------- CrewAI API Client ---------- */
+  async function crewApi(path, options) {
+    options = options || {};
+    var headers = options.headers || {};
+    headers["Authorization"] = "Bearer " + crewToken;
+    if (options.body && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
+    options.headers = headers;
+
+    var url = crewUrl + path;
+    var res = await fetch(url, options);
+    var text = await res.text();
+    var data;
+    try { data = JSON.parse(text); } catch (e) { data = { raw: text }; }
+    if (!res.ok) {
+      var detail = (data && (data.error || data.message || data.detail)) || ("HTTP " + res.status);
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
+    return data;
+  }
+
+  /* ---------- Load Supabase Database Records ---------- */
+  async function loadSupabaseData() {
+    try {
+      var results = await Promise.all([
+        supaApi("districts", "select=*"),
+        supaApi("places", "select=*"),
+        supaApi("guides", "select=*")
+      ]);
+
+      cachedDistricts = results[0] || [];
+      cachedPlaces = results[1] || [];
+      cachedGuides = results[2] || [];
+
+      badgePlacesCount.textContent = cachedPlaces.length;
+      badgeGuidesCount.textContent = cachedGuides.length;
+
+      setSupaStatus(true, "Supabase: " + cachedPlaces.length + " Verified Places");
+      renderDistrictData();
+    } catch (err) {
+      console.warn("Supabase fetch failed:", err);
+      setSupaStatus(false, "Supabase Offline");
+      badgePlacesCount.textContent = "0";
+      badgeGuidesCount.textContent = "0";
+      placesGrid.innerHTML = '<div class="empty">Unable to load attractions from Supabase. Check configuration in Config menu.</div>';
+      guidesGrid.innerHTML = '<div class="empty">Unable to load cultural guides from Supabase.</div>';
+    }
+  }
+
+  /* ---------- Render District Banner, Attractions & Guides ---------- */
+  function renderDistrictData() {
+    var selectedSlug = (districtSelect.value || "Dindigul").toLowerCase().trim();
+    
+    var dist = cachedDistricts.find(function (d) {
+      return (d.district_slug || "").toLowerCase() === selectedSlug ||
+             (d.name_en || "").toLowerCase() === selectedSlug;
+    });
+
+    var places = cachedPlaces.filter(function (p) {
+      return (p.district_slug || "").toLowerCase() === selectedSlug;
+    });
+
+    var guides = cachedGuides.filter(function (g) {
+      return (g.district_slug || "").toLowerCase() === selectedSlug;
+    });
+
+    badgePlacesCount.textContent = places.length;
+    badgeGuidesCount.textContent = guides.length;
+
+    var bannerHtml = "";
+    if (dist) {
+      bannerHtml = '<div class="district-hero">' +
+        '<div class="district-hero-text">' +
+        '<h3>' + (dist.name_en || districtSelect.value) + ' (' + (dist.name_ta || "") + ')</h3>' +
+        '<p>' + (dist.tagline || dist.best_for || "Verified cultural destinations and heritage attractions") + '</p>' +
+        '</div>' +
+        '<div class="district-tagline">✨ ' + places.length + ' Verified Spots &middot; ' + guides.length + ' Cultural Guides</div>' +
+        '</div>';
+    } else {
+      bannerHtml = '<div class="district-hero" style="background:linear-gradient(135deg,#374151,#1f2937);">' +
+        '<div class="district-hero-text">' +
+        '<h3>' + districtSelect.value + '</h3>' +
+        '<p>Supabase database currently holds verified attractions for Dindigul (Palani & Kodaikanal). Switch to Dindigul to explore rich attraction photos, fees, and cultural guides.</p>' +
+        '</div>' +
+        '</div>';
+    }
+
+    districtBannerAttractions.innerHTML = bannerHtml;
+    districtBannerGuides.innerHTML = bannerHtml;
+
+    if (!places.length) {
+      placesGrid.innerHTML = '<div class="empty" style="grid-column:1/-1;">' +
+        '<strong>No Verified Places Found for ' + districtSelect.value + '</strong>' +
+        '<p>Our database currently features fully verified entries for <strong>Dindigul</strong> (Palani Temple, Rock Fort, Kodaikanal Lake, Pillar Rocks, etc.). Select Dindigul to preview live verified attractions!</p>' +
+        '<button type="button" class="btn-primary" style="max-width:260px;margin:0 auto;" id="switch-dindigul-btn">Switch to Dindigul</button>' +
+        '</div>';
+      var switchBtn = $("switch-dindigul-btn");
+      if (switchBtn) {
+        switchBtn.onclick = function () {
+          districtSelect.value = "Dindigul";
+          renderDistrictData();
+        };
+      }
+    } else {
+      var placesHtml = places.map(function (p) {
+        var imgUrl = p.image_url || "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=800&q=80";
+        var mapLink = p.map_url || ("https://maps.google.com/?q=" + encodeURIComponent(p.name + " " + districtSelect.value));
+        var fee = p.entry_fee || "Free";
+        var time = p.visit_minutes ? (p.visit_minutes + " mins") : "45-60 mins";
+        var hours = p.opening_info || "Daylight hours";
+
+        return '<article class="place-card">' +
+          '<div class="place-img-wrap">' +
+          '<img class="place-img" src="' + imgUrl + '" alt="' + p.name + '" loading="lazy">' +
+          '<span class="place-verified-badge">✓ Verified</span>' +
+          '<span class="place-cat-badge">' + (p.category || "Attraction") + '</span>' +
+          '</div>' +
+          '<div class="place-content">' +
+          '<h4 class="place-title">' + p.name + '</h4>' +
+          '<p class="place-desc">' + (p.description || "") + '</p>' +
+          '<div class="place-meta-list">' +
+          '<div class="place-meta-item"><span>⏱️</span> <strong>Visit:</strong> ' + time + '</div>' +
+          '<div class="place-meta-item"><span>🎟️</span> <strong>Entry:</strong> ' + fee + '</div>' +
+          '<div class="place-meta-item"><span>🕒</span> <strong>Hours:</strong> ' + hours + '</div>' +
+          '</div>' +
+          '<div class="place-actions">' +
+          '<a href="' + mapLink + '" target="_blank" rel="noopener noreferrer">📍 View on Google Maps</a>' +
+          '</div>' +
+          '</div>' +
+          '</article>';
+      }).join("");
+      placesGrid.innerHTML = placesHtml;
+    }
+
+    if (!guides.length) {
+      guidesGrid.innerHTML = '<div class="empty" style="grid-column:1/-1;">' +
+        '<strong>No Guides Registered for ' + districtSelect.value + ' Yet</strong>' +
+        '<p>Verified local guides are currently registered in <strong>Dindigul</strong> (covering Palani Temples and Kodaikanal nature trails). Select Dindigul to view verified guide profiles with WhatsApp contacts.</p>' +
+        '</div>';
+    } else {
+      var guidesHtml = guides.map(function (g) {
+        var langs = Array.isArray(g.languages) ? g.languages : (g.languages ? [g.languages] : ["Tamil", "English"]);
+        var langPills = langs.map(function (l) { return '<span class="guide-lang-pill">' + l + '</span>'; }).join("");
+        var waLink = g.contact_link || ("https://wa.me/?text=" + encodeURIComponent("Vanakkam " + g.name + ", I found you via Namma TN Guide."));
+
+        return '<article class="guide-profile-card">' +
+          '<div class="guide-profile-header">' +
+          '<div class="guide-avatar">👤</div>' +
+          '<div class="guide-header-info">' +
+          '<h3>' + g.name + ' <span class="guide-verified-tag" title="Verified Local Guide">✓</span></h3>' +
+          '<div class="guide-langs">' + langPills + '</div>' +
+          '</div>' +
+          '</div>' +
+          '<p class="guide-spec"><strong>Specialization:</strong> ' + (g.specialization || "Local cultural heritage & temple history") + '</p>' +
+          '<a class="guide-whatsapp-btn" href="' + waLink + '" target="_blank" rel="noopener noreferrer">' +
+          '💬 Contact Guide via WhatsApp' +
+          '</a>' +
+          '</article>';
+      }).join("");
+      guidesGrid.innerHTML = guidesHtml;
+    }
+  }
+
+  districtSelect.addEventListener("change", renderDistrictData);
+
+  /* ---------- Load CrewAI Schema & Inputs ---------- */
+  async function loadCrewInputs() {
+    formError.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Connecting to CrewAI...";
+    try {
+      var data = await crewApi("/inputs");
+      var list = data.inputs || data;
+      if (!Array.isArray(list)) list = [];
+      allCrewInputKeys = list.slice();
+
+      extraFieldsEl.innerHTML = "";
+      var coreKeys = ["district", "travel_date", "days", "hours_per_day", "adults", "children", "transport", "budget", "interests", "language", "guide_id"];
+      
+      list.forEach(function (key) {
+        if (typeof key !== "string") return;
+        var cleanKey = key.trim();
+        if (/[\{\}\[\]":,]/.test(cleanKey)) return;
+        if (coreKeys.indexOf(cleanKey) !== -1) return;
+
+        var wrap = document.createElement("label");
+        wrap.textContent = cleanKey.replace(/[_-]+/g, " ").replace(/\b\w/g, function(l){return l.toUpperCase();});
+        var input = document.createElement("input");
+        input.type = "text";
+        input.name = cleanKey;
+        input.id = "f-" + cleanKey;
+        wrap.appendChild(input);
+        extraFieldsEl.appendChild(wrap);
+      });
+
+      setCrewStatus(true, "CrewAI Active");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "🚀 Generate AI Travel Guide";
+    } catch (err) {
+      console.warn("CrewAI Cloud not reachable:", err.message);
+      setCrewStatus(false, "CrewAI Offline (Using Database)");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "🚀 Generate AI Guide (Cloud)";
+    }
+  }
+
+  function initConnections() {
+    loadSupabaseData();
+    loadCrewInputs();
+  }
+
+  /* ---------- Run AI Trip Generation (CrewAI) ---------- */
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    formError.hidden = true;
+
+    var districtVal = $("f-district") ? $("f-district").value.trim() : "Dindigul";
+    var dateVal = $("f-travel_date") ? $("f-travel_date").value.trim() : "";
+    var daysVal = $("f-days") ? $("f-days").value.trim() : "2";
+    var hoursVal = $("f-hours_per_day") ? $("f-hours_per_day").value.trim() : "8";
+    var adultsVal = $("f-adults") ? $("f-adults").value.trim() : "2";
+    var childrenVal = $("f-children") ? $("f-children").value.trim() : "0";
+    var transportVal = $("f-transport") ? $("f-transport").value : "car";
+    var budgetVal = $("f-budget") ? $("f-budget").value : "moderate";
+    var interestsVal = $("f-interests") ? $("f-interests").value.trim() : "temples, heritage";
+    var languageVal = $("f-language") ? $("f-language").value : "en";
+
+    if (!districtVal) { showFormError("Please select a district."); return; }
+    if (!dateVal) { showFormError("Please select a travel date."); return; }
+
+    switchView("planner");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Generating...";
+    var token = ++runToken;
+
+    renderProgress(0, 0, "Initializing automation", "Input Validator Agent checking trip rules");
+
+    try {
+      var payloadInputs = {};
+      allCrewInputKeys.forEach(function (k) { payloadInputs[k] = ""; });
+
+      var guideId = "tn-" + districtVal.toLowerCase().replace(/[^a-z0-9]/g, "") + "-" + Date.now();
+      payloadInputs["guide_id"] = guideId;
+      payloadInputs["district"] = districtVal;
+      payloadInputs["travel_date"] = dateVal;
+      payloadInputs["days"] = String(daysVal);
+      payloadInputs["hours_per_day"] = String(hoursVal);
+      payloadInputs["adults"] = String(adultsVal);
+      payloadInputs["children"] = String(childrenVal);
+      payloadInputs["transport"] = transportVal;
+      payloadInputs["budget"] = budgetVal;
+      payloadInputs["interests"] = interestsVal;
+      payloadInputs["language"] = languageVal;
+
+      var extraInputs = extraFieldsEl.querySelectorAll("input");
+      extraInputs.forEach(function (inp) {
+        if (inp.name) payloadInputs[inp.name] = inp.value.trim();
+      });
+
+      var kick = await crewApi("/kickoff", {
+        method: "POST",
+        body: JSON.stringify({ inputs: payloadInputs })
+      });
+
+      var id = kick.kickoff_id || kick.id;
+      if (!id) throw new Error("The crew did not return a kickoff ID.");
+      await poll(id, token);
+    } catch (err) {
+      if (token === runToken) {
+        console.warn("CrewAI Cloud notice:", err);
+        showFormError("CrewAI Cloud notice: " + err.message + ". Generated instant verified itinerary from Supabase below.");
+        generateInstantItinerary();
+      }
+    } finally {
+      if (token === runToken) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "🚀 Generate AI Travel Guide";
+      }
+    }
+  });
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  async function poll(id, token) {
+    var start = Date.now();
+    while (token === runToken) {
+      if (Date.now() - start > TIMEOUT_MS) throw new Error("Timed out after 20 minutes.");
+      await sleep(POLL_MS);
+
+      var s = await crewApi("/status/" + encodeURIComponent(id));
+      var state = String(s.state || s.status || "").toUpperCase();
+      var elapsed = Math.round((Date.now() - start) / 1000);
+
+      var agentInfo = "";
+      if (s.last_event && s.last_event.agent_role) {
+        agentInfo = s.last_event.agent_role + ": " + (s.last_event.task_name || "processing step");
+      } else if (s.progress && s.progress.current) {
+        agentInfo = "Task " + s.progress.current + " of " + (s.progress.total || "?");
+      }
+
+      if (state === "SUCCESS" || state === "COMPLETED" || state === "FINISHED") {
+        var rawResult = s.result || s.output || (s.data && s.data.result) || s;
+        var md = extractGuideMarkdown(rawResult);
+        renderGuide(md);
+        return;
+      }
+
+      if (state === "FAILED" || state === "ERROR") {
+        throw new Error(extractError(s));
+      }
+
+      var step = 1;
+      var pct = 45;
+      if (elapsed < 8) { step = 0; pct = 15; }
+      else if (elapsed < 35) { step = 1; pct = 30 + Math.min(40, elapsed); }
+      else { step = 2; pct = 85; }
+
+      renderProgress(step, elapsed, state === "STARTED" ? "Agents Active & Researching" : ("Status: " + state), agentInfo, pct);
+    }
+  }
+
+  /* ---------- Instant Itinerary Generator (from Supabase Database) ---------- */
+  quickGenerateBtn.onclick = function () {
+    generateInstantItinerary();
+  };
+
+  if (quickDemoBtn) {
+    quickDemoBtn.onclick = function () {
+      districtSelect.value = "Dindigul";
+      renderDistrictData();
+      generateInstantItinerary();
+    };
+  }
+
+  function generateInstantItinerary() {
+    switchView("planner");
+    var districtVal = $("f-district") ? $("f-district").value.trim() : "Dindigul";
+    var dateVal = $("f-travel_date") ? $("f-travel_date").value.trim() : new Date().toISOString().slice(0, 10);
+    var daysVal = parseInt($("f-days") ? $("f-days").value : "2", 10) || 2;
+    var budgetTier = $("f-budget") ? $("f-budget").value : "moderate";
+    var adults = parseInt($("f-adults") ? $("f-adults").value : "2", 10) || 2;
+
+    var selectedSlug = districtVal.toLowerCase().trim();
+    var places = cachedPlaces.filter(function (p) {
+      return (p.district_slug || "").toLowerCase() === selectedSlug;
+    });
+
+    var guides = cachedGuides.filter(function (g) {
+      return (g.district_slug || "").toLowerCase() === selectedSlug;
+    });
+
+    var dist = cachedDistricts.find(function (d) {
+      return (d.district_slug || "").toLowerCase() === selectedSlug;
+    });
+
+    var mdLines = [];
+    var distNameTa = dist && dist.name_ta ? (" (" + dist.name_ta + ")") : "";
+    var distTagline = dist && dist.tagline ? dist.tagline : "Rich cultural heritage, sacred temples, and natural beauty";
+
+    mdLines.push("# 🏛️ Namma TN Guide: " + districtVal + distNameTa);
+    mdLines.push("");
+    mdLines.push("**Verified Destination Guide** &nbsp;|&nbsp; **Travel Date:** " + dateVal + " &nbsp;|&nbsp; **Duration:** " + daysVal + " Days &nbsp;|&nbsp; **Travelers:** " + adults + " Adults");
+    mdLines.push("");
+    mdLines.push("> **Why this route:** " + distTagline + ". This itinerary links key historical landmarks with scenic natural landscapes, optimized for minimal transit friction and authentic cultural immersion.");
+    mdLines.push("");
+    mdLines.push("### ⚠️ Important Travel Advisories");
+    mdLines.push("- Dress modestly when visiting temple premises; traditional attire is appreciated.");
+    mdLines.push("- Pre-book rope-car or special darshan tickets early during festival days and weekends.");
+    mdLines.push("- Carry light woolens if heading up the Palani / Kodaikanal ghat roads during early mornings and evenings.");
+    mdLines.push("");
+
+    mdLines.push("## 🗓️ Day-by-Day Itinerary");
+    mdLines.push("");
+
+    if (!places.length) {
+      mdLines.push("### Day 1 – Cultural Heritage & Heritage Walking Tour");
+      mdLines.push("");
+      mdLines.push("#### 1. Central Historic Fort & Temple Grounds");
+      mdLines.push("Explore the vibrant district center, historic architecture, and local handicraft bazaars.");
+      mdLines.push("**Entry:** Free | **Suggested Time:** 90 mins | **Transit:** 15 mins");
+      mdLines.push("");
+      mdLines.push("### Day 2 – Scenic Outskirts & Regional Gastronomy");
+      mdLines.push("");
+      mdLines.push("#### 1. Regional Valley Viewpoint & Nature Walk");
+      mdLines.push("Enjoy tranquil vistas and sample authentic Tamil Nadu delicacies.");
+      mdLines.push("**Entry:** Free | **Suggested Time:** 120 mins");
+      mdLines.push("");
+    } else {
+      var placesPerDay = Math.ceil(places.length / daysVal);
+      for (var d = 1; d <= daysVal; d++) {
+        var dayPlaces = places.slice((d - 1) * placesPerDay, d * placesPerDay);
+        if (!dayPlaces.length) dayPlaces = [places[0]];
+
+        var theme = d === 1 ? "Fortress Heritage & Sacred Shrines" : (d === 2 ? "Hill Vistas, Lakes & Botanical Wonders" : "Eco-Retreat & Local Bazaars");
+        mdLines.push("### Day " + d + " – *" + theme + "*");
+        mdLines.push("");
+
+        dayPlaces.forEach(function (stop, sIdx) {
+          mdLines.push("#### " + (sIdx + 1) + ". " + stop.name + " (" + (stop.category || "Heritage") + ")");
+          mdLines.push(stop.description || "");
+          var details = [];
+          if (stop.entry_fee) details.push("**Entry:** " + stop.entry_fee);
+          if (stop.visit_minutes) details.push("**Suggested Time:** " + stop.visit_minutes + " mins");
+          if (stop.opening_info) details.push("**Hours:** " + stop.opening_info);
+          if (stop.map_url) details.push("[View Google Map](" + stop.map_url + ")");
+          mdLines.push(details.join(" | "));
+          mdLines.push("");
+        });
+      }
+    }
+
+    var stayPerNight = budgetTier === "luxury" ? 5500 : (budgetTier === "budget" ? 1200 : 2500);
+    var foodPerDay = budgetTier === "luxury" ? 1800 : (budgetTier === "budget" ? 400 : 900);
+    var transportCost = budgetTier === "luxury" ? 4500 : 2200;
+    var activitiesCost = 450 * adults;
+    var totalStay = stayPerNight * Math.max(1, daysVal - 1);
+    var totalFood = foodPerDay * daysVal * adults;
+    var totalCost = totalStay + totalFood + transportCost + activitiesCost;
+
+    mdLines.push("## 💰 Estimated Budget Breakdown (" + budgetTier.toUpperCase() + ")");
+    mdLines.push("");
+    mdLines.push("| Category | Estimated Cost (INR) |");
+    mdLines.push("| :--- | :--- |");
+    mdLines.push("| **Accommodation (" + Math.max(1, daysVal - 1) + " nights)** | ₹" + totalStay.toLocaleString("en-IN") + " |");
+    mdLines.push("| **Food & Dining (" + daysVal + " days, " + adults + " travelers)** | ₹" + totalFood.toLocaleString("en-IN") + " |");
+    mdLines.push("| **Transport & Local Fuel** | ₹" + transportCost.toLocaleString("en-IN") + " |");
+    mdLines.push("| **Activities & Entry Fees** | ₹" + activitiesCost.toLocaleString("en-IN") + " |");
+    mdLines.push("| **Total Estimated Trip Cost** | **₹" + totalCost.toLocaleString("en-IN") + "** |");
+    mdLines.push("");
+    mdLines.push("*Estimates based on current average seasonal rates in Tamil Nadu.*");
+    mdLines.push("");
+
+    if (guides.length) {
+      mdLines.push("## 👤 Verified Local Cultural Guides");
+      mdLines.push("");
+      guides.forEach(function (g) {
+        var langs = Array.isArray(g.languages) ? g.languages.join(", ") : g.languages;
+        mdLines.push("- **" + g.name + "** (Languages: " + langs + ")");
+        mdLines.push("  - *Specialization:* " + g.specialization);
+        if (g.contact_link) mdLines.push("  - [💬 Connect via WhatsApp](" + g.contact_link + ")");
+      });
+      mdLines.push("");
+    }
+
+    renderGuide(mdLines.join("\n"));
+  }
+
+  /* ---------- Guide Formatting & Rendering ---------- */
+  function extractGuideMarkdown(r) {
+    if (typeof r === "string") {
+      var t = r.trim();
+      if ((t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"))) {
+        try {
+          var parsed = JSON.parse(t);
+          return formatJsonGuideToMarkdown(parsed);
+        } catch (e) { return r; }
+      }
+      return r;
+    }
+    if (typeof r === "object") {
+      var val = r.output || r.raw || r.result || r.final_output;
+      if (typeof val === "string") {
+        try { return formatJsonGuideToMarkdown(JSON.parse(val)); } catch (e) { return val; }
+      }
+      return formatJsonGuideToMarkdown(r);
+    }
+    return String(r);
+  }
+
+  function formatJsonGuideToMarkdown(data) {
+    if (!data || typeof data !== "object") return String(data || "");
+
+    if (!data.district && !data.days && !data.guide_id) {
+      return "```json\n" + JSON.stringify(data, null, 2) + "\n```";
+    }
+
+    var districtName = (data.district && (data.district.name_en || data.district.name_ta)) || data.district_name_en || data.district || "Tamil Nadu";
+    var lines = [];
+
+    lines.push("# 🏛️ Namma TN Guide: " + districtName);
+    lines.push("");
+    if (data.guide_id) lines.push("**Guide ID:** `" + data.guide_id + "` &nbsp;|&nbsp; **Verified On:** " + (data.verified_on || data.verified_date || new Date().toISOString().slice(0,10)));
+    lines.push("");
+
+    if (data.why_this_route) {
+      lines.push("> **Why this route:** " + data.why_this_route);
+      lines.push("");
+    }
+
+    if (Array.isArray(data.warnings) && data.warnings.length) {
+      lines.push("### ⚠️ Important Travel Advisories");
+      data.warnings.forEach(function (w) { lines.push("- " + w); });
+      lines.push("");
+    }
+
+    if (Array.isArray(data.days) && data.days.length) {
+      lines.push("## 🗓️ Day-by-Day Itinerary");
+      lines.push("");
+      data.days.forEach(function (day, idx) {
+        var dayNum = day.day || day.day_number || (idx + 1);
+        var theme = day.theme ? " – *" + day.theme + "*" : "";
+        lines.push("### Day " + dayNum + theme);
+        lines.push("");
+
+        var stops = day.stops || [];
+        if (!stops.length) {
+          lines.push("*No scheduled stops available for this day. Free time for local exploration & cultural walks.*");
+        } else {
+          stops.forEach(function (stop, sIdx) {
+            var stopName = stop.name || stop.place_name || ("Stop " + (sIdx + 1));
+            var category = stop.category ? " (" + stop.category + ")" : "";
+            lines.push("#### " + (sIdx + 1) + ". " + stopName + category);
+            if (stop.tamil_name) lines.push("*" + stop.tamil_name + "*");
+            if (stop.description) lines.push(stop.description);
+            
+            var details = [];
+            if (stop.entry_fee !== undefined && stop.entry_fee !== null) details.push("**Entry:** ₹" + stop.entry_fee);
+            if (stop.visit_minutes) details.push("**Suggested Time:** " + stop.visit_minutes + " mins");
+            if (stop.opening_hours) details.push("**Hours:** " + stop.opening_hours);
+            if (stop.travel_minutes) details.push("**Transit:** " + stop.travel_minutes + " mins");
+            if (details.length) lines.push(details.join(" | "));
+            lines.push("");
+          });
+        }
+        lines.push("");
+      });
+    }
+
+    if (data.budget) {
+      lines.push("## 💰 Estimated Budget Breakdown");
+      lines.push("");
+      var cur = data.budget.currency || "INR";
+      lines.push("| Category | Estimated Cost (" + cur + ") |");
+      lines.push("| :--- | :--- |");
+      if (data.budget.transport !== undefined) lines.push("| **Transport** | ₹" + data.budget.transport + " |");
+      if (data.budget.food !== undefined) lines.push("| **Food & Dining** | ₹" + data.budget.food + " |");
+      if (data.budget.activities !== undefined) lines.push("| **Activities & Entry** | ₹" + data.budget.activities + " |");
+      if (data.budget.stay !== undefined) lines.push("| **Accommodation** | ₹" + data.budget.stay + " |");
+      if (data.budget.total !== undefined) lines.push("| **Total Estimated Cost** | **₹" + data.budget.total + "** |");
+      lines.push("");
+      if (data.budget.note || data.budget.disclaimer) {
+        lines.push("*" + (data.budget.note || data.budget.disclaimer) + "*");
+        lines.push("");
+      }
+    }
+
+    var guides = (Array.isArray(data.guides) && data.guides.length) ? data.guides : cachedGuides;
+    if (guides && guides.length) {
+      lines.push("## 👤 Verified Local Cultural Guides");
+      lines.push("");
+      guides.forEach(function (g) {
+        var gName = g.name || "Local Guide";
+        var spec = g.specialization ? " – " + g.specialization : "";
+        lines.push("- **" + gName + "**" + spec);
+        var contact = g.contact_link || g.contact_url || g.contact;
+        if (contact) lines.push("  [💬 Contact via WhatsApp / Link](" + contact + ")");
+      });
+      lines.push("");
+    }
+
+    return lines.join("\n");
+  }
+
+  function extractError(s) {
+    var e = s.error || s.message || (s.result && s.result.error) || s.status;
+    return typeof e === "string" ? e : "The crew reported an issue during processing.";
+  }
+
+  function renderProgress(step, seconds, label, agentInfo, customPct) {
+    emptyState.hidden = true;
+    var names = ["Validating", "Researching & Routing", "Finalizing"];
+    var pct = customPct !== undefined ? customPct : (step === 0 ? 15 : step === 1 ? 55 : 95);
+    var stops = names.map(function (n, i) {
+      var cls = i < step ? "done" : i === step ? "now" : "";
+      return '<div class="stop ' + cls + '"><i></i>' + n + "</div>";
+    }).join("");
+    var m = Math.floor(seconds / 60), s = seconds % 60;
+    
+    var agentHtml = agentInfo ? 
+      '<div class="agent-status"><span style="font-size:1.1rem;">🤖</span> <span>' + agentInfo + '</span></div>' : '';
+
+    plannerOutputContainer.innerHTML =
+      '<div class="route-tracker"><h2>' + label + '...</h2>' +
+      '<p class="elapsed">Elapsed: ' + m + "m " + String(s).padStart(2, "0") + "s &middot; CrewAI Cloud Execution</p>" +
+      agentHtml +
+      '<div class="track"><div class="fill" style="width:calc((100% - 28px) * ' + (pct / 100) + ')"></div>' + stops + "</div></div>";
+  }
+
+  function renderGuide(md) {
+    lastMarkdown = md || "";
+    if (!lastMarkdown.trim()) {
+      emptyState.hidden = false;
+      plannerOutputContainer.innerHTML = "";
+      showFormError("The generator returned no content.");
+      return;
+    }
+    emptyState.hidden = true;
+    var html = DOMPurify.sanitize(marked.parse(lastMarkdown));
+    plannerOutputContainer.innerHTML =
+      '<article class="guide-card">' +
+      '<div class="guide-toolbar">' +
+      '<span>🏛️ Tamil Nadu Verified Travel Guide</span>' +
+      '<div>' +
+      '<button class="btn-ghost" id="copy" type="button">📋 Copy Markdown</button>' +
+      '<button class="btn-ghost" id="dl" type="button">💾 Download .md</button>' +
+      '<button class="btn-ghost" id="print" type="button">🖨️ Print / PDF</button>' +
+      '</div></div>' +
+      '<div class="prose">' + html + '</div></article>';
+
+    plannerOutputContainer.querySelectorAll(".prose a").forEach(function (a) {
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+    });
+
+    $("copy").onclick = function () {
+      navigator.clipboard.writeText(lastMarkdown).then(function () {
+        $("copy").textContent = "✓ Copied!";
+        setTimeout(function () { $("copy").textContent = "📋 Copy Markdown"; }, 1600);
+      });
+    };
+    $("dl").onclick = function () {
+      var blob = new Blob([lastMarkdown], { type: "text/markdown" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "namma-tn-guide.md";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+    $("print").onclick = function () { window.print(); };
+    plannerOutputContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Initial load
+  initConnections();
+})();
+</script>
+</body>
+</html>
