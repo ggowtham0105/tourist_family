@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Namma TN Guide – Tamil Nadu Tourist Guide Generator</title>
-<meta name="description" content="Generate a personalized Tamil Nadu travel guide in minutes, powered by CrewAI automation and verified Supabase tourist data.">
+<meta name="description" content="Generate a personalized Tamil Nadu travel guide in minutes.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -841,21 +841,9 @@
 <header class="top">
   <div class="header-content">
     <h1><span class="logo-icon">🏛️</span> Namma TN Guide</h1>
-    <p>Tamil Nadu tourist guide generator · CrewAI & Supabase powered</p>
+    <p>Tamil Nadu tourist guide generator</p>
   </div>
-  <div class="header-actions">
-    <div class="status-badge" id="crew-badge" title="CrewAI Automation Status">
-      <span class="status-dot" id="crew-dot"></span>
-      <span id="crew-status-text">CrewAI: Connecting...</span>
-    </div>
-    <div class="status-badge" id="supa-badge" title="Supabase Database Status">
-      <span class="status-dot" id="supa-dot"></span>
-      <span id="supa-status-text">Supabase: Initializing...</span>
-    </div>
-    <button class="config-btn" id="toggle-settings" type="button" aria-expanded="false">
-      ⚙️ Config
-    </button>
-  </div>
+
 </header>
 
 <main>
@@ -864,36 +852,6 @@
     <div class="panel-header">
       <h2 id="form-title">Trip Details</h2>
       <span>Tamil Nadu</span>
-    </div>
-
-    <!-- Collapsible Settings Panel -->
-    <div id="settings-panel" class="settings-box" hidden>
-      <h3>⚙️ Configuration Settings</h3>
-      
-      <div class="settings-section-title">Supabase Database</div>
-      <label>
-        Project REST URL
-        <input type="text" id="cfg-supa-url" value="https://yljiexsrnjzyfjgplpvg.supabase.co">
-      </label>
-      <label>
-        Anon / Publishable API Key
-        <input type="password" id="cfg-supa-key" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsamlleHNybmp6eWZqZ3BscHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5NzQxNTQsImV4cCI6MjEwNTU1MDE1NH0.JA92I-eUWfiEypcZw2yp3KOkngb35LRtcwTiBpmEAxs">
-      </label>
-
-      <div class="settings-section-title">CrewAI Cloud Automation</div>
-      <label>
-        CrewAI Cloud URL
-        <input type="text" id="cfg-crew-url" value="https://namma-tn-guide-tourist-guide-generator-v1-1-10ae4218.crewai.com">
-      </label>
-      <label>
-        User Bearer Token
-        <input type="password" id="cfg-crew-token" value="73e786169942">
-      </label>
-
-      <div class="settings-actions">
-        <button type="button" class="btn-primary" id="cfg-save" style="padding:7px 12px;font-size:0.85rem;width:auto;">Save & Reconnect</button>
-        <button type="button" class="btn-ghost" id="cfg-reset" style="padding:7px 12px;font-size:0.85rem;width:auto;">Reset</button>
-      </div>
     </div>
 
     <form id="form" novalidate>
@@ -1114,15 +1072,7 @@
   var formError = $("form-error"), extraFieldsEl = $("extra-fields");
   var districtSelect = $("f-district");
 
-  /* Settings Elements */
-  var settingsPanel = $("settings-panel"), toggleSettingsBtn = $("toggle-settings");
-  var cfgCrewUrl = $("cfg-crew-url"), cfgCrewToken = $("cfg-crew-token");
-  var cfgSupaUrl = $("cfg-supa-url"), cfgSupaKey = $("cfg-supa-key");
-  var cfgSaveBtn = $("cfg-save"), cfgResetBtn = $("cfg-reset");
 
-  /* Status Elements */
-  var crewDot = $("crew-dot"), crewStatusText = $("crew-status-text");
-  var supaDot = $("supa-dot"), supaStatusText = $("supa-status-text");
   var badgePlacesCount = $("badge-places-count"), badgeGuidesCount = $("badge-guides-count");
 
   /* Tabs & Views */
@@ -1150,12 +1100,6 @@
   var cachedDistricts = [];
   var cachedPlaces = [];
   var cachedGuides = [];
-
-  // Initialize input fields with stored values
-  cfgCrewUrl.value = crewUrl;
-  cfgCrewToken.value = crewToken;
-  cfgSupaUrl.value = supaUrl;
-  cfgSupaKey.value = supaKey;
 
   // Set default travel date to next weekend if empty
   var travelDateInp = $("f-travel_date");
@@ -1191,66 +1135,20 @@
     });
   }
 
-  /* ---------- Settings Drawer Handling ---------- */
-  toggleSettingsBtn.onclick = function () {
-    var hidden = settingsPanel.hidden;
-    settingsPanel.hidden = !hidden;
-    toggleSettingsBtn.setAttribute("aria-expanded", String(hidden));
-  };
-
-  cfgSaveBtn.onclick = function () {
-    crewUrl = (cfgCrewUrl.value || DEFAULT_CREW_URL).trim().replace(/\/+$/, "");
-    crewToken = (cfgCrewToken.value || DEFAULT_CREW_TOKEN).trim();
-    supaUrl = (cfgSupaUrl.value || DEFAULT_SUPA_URL).trim().replace(/\/+$/, "");
-    supaKey = (cfgSupaKey.value || DEFAULT_SUPA_KEY).trim();
-
-    localStorage.setItem("crewai_url", crewUrl);
-    localStorage.setItem("crewai_token", crewToken);
-    localStorage.setItem("supabase_url", supaUrl);
-    localStorage.setItem("supabase_key", supaKey);
-
-    settingsPanel.hidden = true;
-    initConnections();
-  };
-
-  cfgResetBtn.onclick = function () {
-    crewUrl = DEFAULT_CREW_URL;
-    crewToken = DEFAULT_CREW_TOKEN;
-    supaUrl = DEFAULT_SUPA_URL;
-    supaKey = DEFAULT_SUPA_KEY;
-
-    cfgCrewUrl.value = DEFAULT_CREW_URL;
-    cfgCrewToken.value = DEFAULT_CREW_TOKEN;
-    cfgSupaUrl.value = DEFAULT_SUPA_URL;
-    cfgSupaKey.value = DEFAULT_SUPA_KEY;
-
-    localStorage.removeItem("crewai_url");
-    localStorage.removeItem("crewai_token");
-    localStorage.removeItem("supabase_url");
-    localStorage.removeItem("supabase_key");
-
-    settingsPanel.hidden = true;
-    initConnections();
-  };
-
-  /* ---------- Status Indicators ---------- */
+  /* ---------- Status Indicators (Background Loggers) ---------- */
   function setCrewStatus(ok, text) {
     if (ok) {
-      crewDot.className = "status-dot";
-      crewStatusText.textContent = text || "CrewAI Active";
+      console.log("[CrewAI]", text || "Active");
     } else {
-      crewDot.className = "status-dot offline";
-      crewStatusText.textContent = text || "CrewAI Offline";
+      console.warn("[CrewAI]", text || "Offline");
     }
   }
 
   function setSupaStatus(ok, text) {
     if (ok) {
-      supaDot.className = "status-dot";
-      supaStatusText.textContent = text || "Supabase Connected";
+      console.log("[Supabase]", text || "Connected");
     } else {
-      supaDot.className = "status-dot offline";
-      supaStatusText.textContent = text || "Supabase Error";
+      console.warn("[Supabase]", text || "Error");
     }
   }
 
@@ -1874,7 +1772,7 @@
 
     plannerOutputContainer.innerHTML =
       '<div class="route-tracker"><h2>' + label + '...</h2>' +
-      '<p class="elapsed">Elapsed: ' + m + "m " + String(s).padStart(2, "0") + "s &middot; CrewAI Cloud Execution</p>" +
+      '<p class="elapsed">Elapsed: ' + m + "m " + String(s).padStart(2, "0") + "s</p>" +
       agentHtml +
       '<div class="track"><div class="fill" style="width:calc((100% - 28px) * ' + (pct / 100) + ')"></div>' + stops + "</div></div>";
   }
